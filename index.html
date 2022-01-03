@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=700, initial-scale=1.0" />
+    <title>BSV Data Transaction</title>
+  </head>
+  <body>
+    <script src="./lib/bsv/bsv.bundle.js"></script>
+    <script src="./lib/htmlConsole.js"></script>
+
+    <script src="./index.js" type="module"></script>
+
+    <div id="console-area"></div>
+    <script>
+      htmlConsole.create(document.getElementById("console-area"), {
+        height: "30em",
+      });
+      console.log("*** Welcome to the BSV Transaction Builder ***");
+      console.log("To build a transaction, call the [makeDataTx] function.");
+      console.log("Example: makeDataTx('data 1', 'data 2')");
+      console.log("Check the [help] function with: help()");
+    </script>
+  </body>
+</html>
