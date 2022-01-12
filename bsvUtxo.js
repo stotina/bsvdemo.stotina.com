@@ -1,4 +1,4 @@
-import bsvjs, { Bn } from "./lib/bsv/bsv.js";
+import bsvjs from "./lib/bsv/bsv.js";
 import { PRIV_KET_MAIN, PRIV_KEY_TEST, PRIV_KEY_FAKE } from "./settings.js";
 
 let inputSourceNetwork = "fake";
@@ -7,10 +7,12 @@ export const possibleInputSources = ["main", "test", "fake"];
 
 window.utxo = {
   possibleInputSources,
+  getPrivKey,
+  getKeyPair,
+  getAddress,
   getNetwork,
   setNetwork,
   getUtxos,
-  getWhatsOnChainUnspent,
 };
 
 export function getPrivKey() {
@@ -50,29 +52,39 @@ export function setNetwork(sourceName) {
 }
 
 /**
- * @returns Array<{ pk: bsvjs.PrivKey; out: bsvjs.TxOut, txid: bsvjs.Buffer, vout: number }>
+ * @returns Array<{ pk: bsvjs.PrivKey; out: bsvjs.TxOut, txid: Buffer, vout: number }>
  */
 export async function getUtxos() {
   const pk = getPrivKey();
   const addr = getAddress();
+  const utxos = [];
 
   if (inputSourceNetwork === "main")
-    return await getWocUtxos(addr, "main").map((i) => ({ pk, ...i }));
+    utxos.push(...(await getWocUtxos(addr, "main")));
   else if (inputSourceNetwork === "test")
-    return await getWocUtxos(addr, "test").map((i) => ({ pk, ...i }));
+    utxos.push(...(await getWocUtxos(addr, "test")));
   else if (inputSourceNetwork === "fake")
-    return await getFakeUtxos(addr).map((i) => ({ pk, ...i }));
+    utxos.push(...(await getFakeUtxos(addr)));
   else throw new Error("Unsupported Network: " + inputSourceNetwork);
+
+  return utxos.map((i) => {
+    return {
+      pk,
+      out: bsvjs.TxOut.fromJSON(i.out.toJSON()),
+      txid: i.txid,
+      vout: parseInt(i.vout),
+    };
+  });
 }
 
 async function getFakeUtxos(addr) {
   const script = bsvjs.Script.fromPubKeyHash(addr.hashBuf);
   const out = new bsvjs.TxOut(
     new bsvjs.Bn("100000000"),
-    VarInt.fromNumber(script.toBuffer().length),
+    bsvjs.VarInt.fromNumber(script.toBuffer().length),
     script
   );
-  const txid = bsvjs.Buffer.from(
+  const txid = Buffer.from(
     "25c7f2c9ba4faae6e9d067205a4c7f5bf0611564bcf0400385fc4f9fc458ac6f",
     "hex"
   );
@@ -100,8 +112,8 @@ export async function getWocUtxos(address, network = "main") {
       value: i.value,
       height: i.height,
     };
-    const out = new bsvjs.TxOut(new Bn(res.value), scriptLen, script);
-    const txid = bsvjs.Buffer.from(res.txid, "hex");
+    const out = new bsvjs.TxOut(new bsvjs.Bn(res.value), scriptLen, script);
+    const txid = Buffer.from(res.txid, "hex");
     return [{ out, txid, vout: res.vout }];
   });
 }
