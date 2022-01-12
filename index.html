@@ -17,10 +17,9 @@
       htmlConsole.create(document.getElementById("console-area"), {
         height: "30em",
       });
-      console.log("*** Welcome to the BSV Transaction Builder ***");
-      console.log("To build a transaction, call the [makeDataTx] function.");
-      console.log("Example: makeDataTx('data 1', 'data 2')");
-      console.log("Check the [help] function with: help()");
+      console.warn("*** Welcome to the BSV Transaction Builder ***");
+      console.log("------------");
+      window.onload = () => help();
     </script>
   </body>
 </html>

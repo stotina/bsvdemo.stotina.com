@@ -23,7 +23,7 @@ export async function makeTx(
     if (outputDetail.address) {
       txb.outputToAddress(
         new bsvjs.Bn(outputDetail.satoshis, 10),
-        Address.fromString(outputDetail.address)
+        bsvjs.Address.fromString(outputDetail.address)
       );
     } else if (outputDetail.data) {
       txb.outputToScript(
@@ -66,7 +66,7 @@ export async function makeTx(
   txb.signWithKeyPairs([fromKeyPair]);
 
   if (broadcast) {
-    await broadcastTx(txb.tx.toHex());
+    const res = await broadcastTx(txb.tx.toHex());
   }
 
   return txb.tx;

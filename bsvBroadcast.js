@@ -1,14 +1,23 @@
-import { getNetwork } from "./bsvUtxo.js";
+import { getAddress, getNetwork } from "./bsvUtxo.js";
 
 export async function broadcastTx(txhex, network = undefined) {
-  network = network || getNetwork();
+  network = network?.toString() || getNetwork()?.toString();
 
-  const res = await fetch({
+  const url = `https://api.whatsonchain.com/v1/bsv/${network}/tx/raw`;
+
+  const res = await fetch(url, {
     method: "POST",
-    url: `https://api.whatsonchain.com/v1/bsv/${network}/tx/raw`,
-    body: { txhex },
+    body: JSON.stringify({ txhex }),
     headers: { "Content-Type": "application/json" },
   });
 
-  return res;
+  if (!res.ok)
+    throw new Error(
+      `Failed to broadcast TX to ${url}: ` +
+        ((await res.text()) || res.statusText) +
+        ". Extra Information: " +
+        JSON.stringify({ network, address: getAddress().toString(), tx: txhex })
+    );
+
+  return await res.json();
 }

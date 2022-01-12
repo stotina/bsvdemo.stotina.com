@@ -1,7 +1,7 @@
 import bsvjs from "./lib/bsv/bsv.js";
 import { PRIV_KET_MAIN, PRIV_KEY_TEST, PRIV_KEY_FAKE } from "./settings.js";
 
-let inputSourceNetwork = "fake";
+let inputSourceNetwork = "main";
 
 export const possibleInputSources = ["main", "test", "fake"];
 
@@ -57,15 +57,15 @@ export function setNetwork(sourceName) {
 export async function getUtxos() {
   const pk = getPrivKey();
   const addr = getAddress();
-  const utxos = [];
+  let utxos = [];
 
-  if (inputSourceNetwork === "main")
-    utxos.push(...(await getWocUtxos(addr, "main")));
-  else if (inputSourceNetwork === "test")
-    utxos.push(...(await getWocUtxos(addr, "test")));
-  else if (inputSourceNetwork === "fake")
-    utxos.push(...(await getFakeUtxos(addr)));
-  else throw new Error("Unsupported Network: " + inputSourceNetwork);
+  if (inputSourceNetwork === "main") {
+    utxos = await getWocUtxos(addr, "main");
+  } else if (inputSourceNetwork === "test") {
+    utxos = await getWocUtxos(addr, "test");
+  } else if (inputSourceNetwork === "fake") {
+    utxos = await getFakeUtxos(addr);
+  } else throw new Error("Unsupported Network: " + inputSourceNetwork);
 
   return utxos.map((i) => {
     return {
@@ -87,25 +87,25 @@ async function getFakeUtxos(addr) {
   const txid = Buffer.from(
     "25c7f2c9ba4faae6e9d067205a4c7f5bf0611564bcf0400385fc4f9fc458ac6f",
     "hex"
-  );
+  ).reverse();
   return [{ out, txid, vout: 3 }];
 }
 
 export async function getWocUtxos(address, network = "main") {
   const url = `https://api.whatsonchain.com/v1/bsv/${network}/address/${address}/unspent`;
-  const res = await fetch(url);
-  if (!res.ok)
-    throw new Error(
-      `Failed to GET ${url} : ${res.status} ${res.statusText}` +
-        ` - ${JSON.stringify(res.body)}`
-    );
+  const result = await fetch(url).then((res) => res.json());
+
+  if (!Array.isArray(result))
+    throw new Error(`Failed to GET ${url} : Data = ${JSON.stringify(result)}`);
+
   const addr =
     network === "main"
       ? bsvjs.Address.fromString(address.toString())
       : bsvjs.Address.Testnet.fromString(address.toString());
   const script = bsvjs.Script.fromPubKeyHash(addr.hashBuf);
   const scriptLen = bsvjs.VarInt.fromNumber(script.toBuffer().length);
-  return res.body.map((i) => {
+
+  return result.map((i) => {
     const res = {
       txid: i.tx_hash,
       vout: i.tx_pos,
@@ -113,7 +113,7 @@ export async function getWocUtxos(address, network = "main") {
       height: i.height,
     };
     const out = new bsvjs.TxOut(new bsvjs.Bn(res.value), scriptLen, script);
-    const txid = Buffer.from(res.txid, "hex");
-    return [{ out, txid, vout: res.vout }];
+    const txid = Buffer.from(res.txid, "hex").reverse();
+    return { out, txid, vout: res.vout };
   });
 }
