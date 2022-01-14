@@ -117,3 +117,9 @@ export async function getWocUtxos(address, network = "main") {
     return { out, txid, vout: res.vout };
   });
 }
+
+export async function getWocTx(txid, network = "main") {
+  const url = `https://api.whatsonchain.com/v1/bsv/${network}/tx/${txid}/hex`;
+  const result = await fetch(url).then((res) => res.text());
+  return bsvjs.Tx.fromHex(result);
+}

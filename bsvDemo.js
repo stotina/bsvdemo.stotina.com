@@ -16,6 +16,7 @@ export function help() {
     "- makeSendFundsTx: Function for sending bitcoin to an address. Example: makeSendFundsTx(address, satoshis)",
     "- makeSwipeTx: Function for taking all funds and sending them to an address. Example: makeSwipeTx(address)",
     "- makeTx: Function for making custom transaction. Example: makeTx([{ satoshis, address }, { data: bufferArray }])",
+    "- readTx: Function for reading an existing transaction. Example: readTx(txid)",
     "* * *",
     `- utxo.possibleInputSources: Possible BSV Networks (${utxo.possibleInputSources})`,
     "- utxo.getPrivKey: Gets the private key used for the specific network",
@@ -39,34 +40,15 @@ export async function makeDataTx(stringsToWriteToBlockchain, broadcast = true) {
     return Buffer.from(str);
   });
   const tx = await makeTx([{ data }], broadcast);
-  logTx(tx);
   return tx;
 }
 
 export async function makeSendFundsTx(address, satoshis, broadcast = true) {
   const tx = await makeTx([{ satoshis, address }], broadcast);
-  logTx(tx);
   return tx;
 }
 
 export async function makeSwipeTx(sendToAddress, broadcast = true) {
   const tx = await makeTx([], broadcast, true, sendToAddress);
-  logTx(tx);
   return tx;
-}
-
-function logTx(tx) {
-  const network = utxo.getNetwork();
-
-  if (network === "main") {
-    const url = "https://whatsonchain.com/tx/" + tx.id();
-    console.html(`TXID: <a href="${url}">${tx.id()}</a>`, "aqua");
-  } else if (network === "test") {
-    const url = "https://test.whatsonchain.com/tx/" + tx.id();
-    console.html(`TXID: <a href="${url}">${tx.id()}</a>`, "aqua");
-  } else {
-    console.info("TXID: " + tx.id());
-  }
-  console.info("TX:");
-  console.info(tx.toHex());
 }
